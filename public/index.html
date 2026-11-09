@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robert Chitic, Software and AI Engineer</title>
+<meta name="description" content="Robert Chitic is a software and AI engineer in London: First-Class Computer Science graduate from the University of Greenwich, previously a Technical Support Engineer intern at Cloudflare.">
+<meta property="og:title" content="Robert Chitic, Software and AI Engineer">
+<meta property="og:description" content="First-Class Computer Science, University of Greenwich. Previously at Cloudflare. Political bias detection, machine learning and networking.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0E0B26">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/instrument-sans-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="cursor" aria-hidden="true">
+  <div class="cursor-ring"><span class="cursor-label"></span></div>
+  <div class="cursor-dot"></div>
+</div>
+
+<a class="skip" href="#research">Skip to content</a>
+
+<header class="nav" id="nav">
+  <a class="nav-name" href="#top" data-magnetic>RC</a>
+  <nav aria-label="Sections">
+    <a href="#research" data-magnetic>Research</a>
+    <a href="#cloudflare" data-magnetic>Cloudflare</a>
+    <a href="#projects" data-magnetic>Projects</a>
+    <a href="#timeline" data-magnetic>Timeline</a>
+    <a class="nav-cta" href="#contact" data-magnetic>Contact</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section class="hero" id="top" data-theme="night" data-gl>
+  <div class="hero-inner">
+    <h1 class="name" id="name" aria-label="Robert Chitic" translate="no">
+      <span class="name-line" aria-hidden="true">Robert</span>
+      <span class="name-line" aria-hidden="true">Chitic</span>
+    </h1>
+    <div class="hero-foot">
+      <p class="lede">Software and AI engineer in London. First-Class Computer Science from Greenwich, then a summer at Cloudflare.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#contact" data-magnetic>Get in touch</a>
+        <a class="btn btn-ghost" href="cv/Robert-Chitic-CV.pdf" download data-magnetic data-cursor="PDF">Download CV</a>
+      </div>
+      <p class="status"><i></i>Open to software and AI engineering roles</p>
+    </div>
+  </div>
+  <p class="hint" id="hint">Move your cursor through the field</p>
+</section>
+
+<!-- RESEARCH -->
+<section class="sec" id="research" data-theme="lavender">
+  <div class="wrap">
+    <p class="kicker">Dissertation, 2025 to 2026</p>
+    <h2 class="statement" data-split>Does a newspaper’s reputation tell you how biased its articles are? <span class="soft">Only about half the time.</span></h2>
+
+    <div class="research">
+      <figure class="units" id="units">
+        <div class="units-grid" id="unitsGrid" role="img" aria-label="Unit chart: 54.6 out of 100 articles matched their outlet's reputation"></div>
+        <figcaption>
+          <span class="big num">54.6%</span>
+          <span>of articles leaned the way their outlet’s reputation predicted. Each square is 1% of articles.</span>
+        </figcaption>
+      </figure>
+
+      <div class="research-side">
+        <p class="body">I built a model that reads a UK news article and detects its political bias. It runs as a Chrome extension backed by an API, trained on 4,523 articles from 9 outlets.</p>
+
+        <div class="score" id="score">
+          <p class="label">Macro F1 on a 291-article gold set</p>
+          <div class="bar"><span>My model</span><b class="num">0.847</b><i style="--w:.847"></i></div>
+          <div class="bar base"><span>VADER, a common baseline</span><b class="num">0.293</b><i style="--w:.293"></i></div>
+        </div>
+
+        <dl class="facts">
+          <div><dt>Accuracy</dt><dd class="num">0.849</dd></div>
+          <div><dt>Brier score</dt><dd class="num">0.109</dd></div>
+          <div><dt>Outlets</dt><dd class="num">9</dd></div>
+        </dl>
+
+        <ul class="honours">
+          <li>Recommended for academic publication. A paper is in preparation with my supervisor.</li>
+          <li>One of 10 Computer Science students chosen to present at the Digital Shark Expo 2026.</li>
+        </ul>
+      </div>
+    </div>
+
+    <figure class="pipeline" id="pipeline">
+      <p class="label">How it fits together</p>
+      <div class="pipe-track"><i class="pipe-fill" id="pipeFill"></i></div>
+      <ol class="pipe">
+        <li><strong>4,523 articles</strong><span>Collected from 9 UK outlets</span></li>
+        <li><strong>Two models</strong><span>Fine-tuned RoBERTa against a Linear SVM</span></li>
+        <li class="ship"><strong>SVM shipped</strong><span>Best accuracy for what it costs to run</span></li>
+        <li><strong>FastAPI service</strong><span>One <code>/analyse</code> endpoint</span></li>
+        <li><strong>Chrome extension</strong><span>Scores the article you’re reading</span></li>
+      </ol>
+    </figure>
+  </div>
+</section>
+
+<!-- CLOUDFLARE -->
+<section class="sec" id="cloudflare" data-theme="orange">
+  <div class="wrap">
+    <p class="kicker">Technical Support Engineer Intern, Cloudflare, July to September 2026</p>
+    <h2 class="statement" data-split>A summer on Cloudflare’s Premium and Enterprise cases.</h2>
+
+    <figure class="ddos" id="ddos">
+      <div class="ddos-head">
+        <p class="label">Hover a layer to launch an attack</p>
+        <p class="ddos-count"><b class="num" id="blocked">0</b> attack packets blocked</p>
+      </div>
+      <canvas id="ddosCanvas" data-cursor="Attack" tabindex="0" role="img" aria-label="Animation: attack traffic is blocked at layers 3, 4 and 7 while real users pass through. Press 3, 4 or 7 to launch an attack at that layer."></canvas>
+      <figcaption>Based on an attack-and-defend lab set by my manager: I reproduced DDoS attacks at layers 3, 4 and 7 on DigitalOcean VMs, then defended against them with WAF rules, SSL/TLS and Zero Trust.</figcaption>
+    </figure>
+
+    <ol class="log">
+      <li><span class="lead num" data-count="60">60</span><p>Premium and Enterprise cases resolved, through tickets and live customer calls across Cloudflare’s networking and security products.</p></li>
+      <li><span class="lead">Built solo</span><p>An onboarding tool for new hires: a wiki of hundreds of troubleshooting guides and past cases, linked to Cloudflare’s internal AI assistant through an MCP server that guides people to the answer.</p></li>
+      <li><span class="lead num">1 of <span data-count="50">50</span></span><p>Teams in the company hackathon, across EMEA, North America and APAC. We built an on-page AI assistant on Workers AI that restyles any website on request.</p></li>
+      <li><span class="lead">On call</span><p>Joined the PagerDuty rota. Traced root causes with shell scripts, Python and networking tools, and escalated confirmed bugs to engineering with reproduction steps.</p></li>
+      <li><span class="lead">Shout-out</span><p>Recognised company-wide at the end of the internship for supporting the team and joining high-priority customer calls.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section class="sec" id="projects" data-theme="night">
+  <div class="wrap">
+    <p class="kicker">More projects</p>
+    <h2 class="statement" data-split>Machine learning, distributed systems and a team I led.</h2>
+
+    <div class="projects">
+      <article class="panel" data-tilt>
+        <div class="plot">
+          <svg viewBox="0 0 320 200" id="sepsisPlot" role="img" aria-label="AUROC: LSTM 0.687 compared with Random Forest 0.661, on a scale from 0.5 (chance) to 1.0">
+            <line x1="20" y1="120" x2="300" y2="120" class="axis"/>
+            <g class="ticks">
+              <line x1="20" y1="114" x2="20" y2="126"/><line x1="160" y1="114" x2="160" y2="126"/><line x1="300" y1="114" x2="300" y2="126"/>
+            </g>
+            <text x="20" y="146" text-anchor="middle" class="t-muted">0.5</text>
+            <text x="160" y="146" text-anchor="middle" class="t-muted">0.75</text>
+            <text x="300" y="146" text-anchor="middle" class="t-muted">1.0</text>
+            <text x="20" y="166" text-anchor="middle" class="t-muted">chance</text>
+            <g class="pin rf" data-x="110.2">
+              <line x1="110.2" y1="120" x2="110.2" y2="78"/>
+              <circle cx="110.2" cy="120" r="7"/>
+              <text x="104" y="70" text-anchor="end">Random Forest 0.661</text>
+            </g>
+            <g class="pin lstm" data-x="124.7">
+              <line x1="124.7" y1="120" x2="124.7" y2="40"/>
+              <circle cx="124.7" cy="120" r="8"/>
+              <text x="131" y="38" class="t-strong">LSTM 0.687</text>
+            </g>
+            <text x="20" y="192" class="t-muted">AUROC, higher is better</text>
+          </svg>
+        </div>
+        <h3>Early sepsis prediction</h3>
+        <p class="tags">Python, PyTorch, scikit-learn, pandas</p>
+        <p>An LSTM trained on 5,044 ICU stays that beat a Random Forest baseline at predicting sepsis early.</p>
+      </article>
+
+      <article class="panel" data-tilt>
+        <div class="plot">
+          <svg viewBox="0 0 320 200" id="chatPlot" role="img" aria-label="Interactive diagram: four laptops route chat messages through an elected coordinator. Click the coordinator to take it offline."></svg>
+        </div>
+        <p class="chat-status" id="chatStatus" aria-live="polite">Click the coordinator to take it offline</p>
+        <h3>Distributed chat system</h3>
+        <p class="tags">Java, sockets, JUnit</p>
+        <p>Fault-tolerant chat with coordinator election. Tested with 20 live clients on 4 laptops and 100 scripted clients, delivering every message.</p>
+      </article>
+
+      <article class="panel" data-tilt>
+        <div class="plot">
+          <svg viewBox="0 0 320 200" id="bridgePlot" role="img" aria-label="Diagram: a Kotlin app and Scala code connected by a reflection bridge, both using a SQLite database">
+            <text x="160" y="18" text-anchor="middle" class="t-muted">reflection bridge</text>
+            <rect x="14" y="30" width="110" height="56" rx="10" class="box"/>
+            <text x="69" y="63" text-anchor="middle" class="t-strong">Kotlin</text>
+            <rect x="196" y="30" width="110" height="56" rx="10" class="box"/>
+            <text x="251" y="63" text-anchor="middle" class="t-strong">Scala</text>
+            <path d="M124 50 H196" class="wire flow"/>
+            <path d="M196 66 H124" class="wire flow rev"/>
+            <path d="M69 86 V122 H251 V86 M160 122 V136" class="wire"/>
+            <ellipse cx="160" cy="140" rx="40" ry="9" class="db"/>
+            <path d="M120 140 V174 A40 9 0 0 0 200 174 V140" class="db"/>
+            <text x="160" y="166" text-anchor="middle" class="t-strong">SQLite</text>
+            <g class="team"><circle cx="262" cy="160" r="6"/><circle cx="280" cy="160" r="6"/><circle cx="298" cy="160" r="6"/></g>
+            <text x="280" y="186" text-anchor="middle" class="t-muted">team of 3</text>
+          </svg>
+        </div>
+        <h3>Event planner, team lead</h3>
+        <p class="tags">Kotlin, Scala, SQLite, JDBC</p>
+        <p>Led three developers. Designed the SQLite persistence layer and a reflection-based bridge between Scala and Kotlin.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLKIT -->
+<section class="sec" id="toolkit" data-theme="lime">
+  <div class="wrap">
+    <p class="kicker">Toolkit</p>
+    <h2 class="statement" data-split>Every tool here has been used on real work.</h2>
+
+    <div class="matrix-wrap">
+      <div class="matrix-box">
+        <table class="matrix" id="matrix">
+          <caption class="sr">Tools and the projects they were used in</caption>
+        </table>
+      </div>
+      <aside class="matrix-note" aria-live="polite">
+        <p class="label">Hover or tap a tool or a project</p>
+        <h3 id="traceTitle">Python</h3>
+        <p id="traceText">Used in the bias detector, the sepsis model, debugging at Cloudflare and the onboarding tool.</p>
+        <div class="also">
+          <p class="label">Also comfortable with</p>
+          <p>JavaScript, SQL, R, MongoDB, HuggingFace, REST APIs, Docker, Git, CI, Linux, Azure, Salesforce. AWS Cloud Essentials badge, October 2026.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="sec" id="timeline" data-theme="night">
+  <div class="wrap">
+    <p class="kicker">Timeline</p>
+    <h2 class="statement" data-split>The last two years, at a glance.</h2>
+    <div class="tl-viewport" id="tlViewport" tabindex="0" aria-label="Timeline from February 2025 to now. Use the left and right arrow keys to move along it.">
+      <div class="tl" id="tl"></div>
+    </div>
+    <p class="label tl-hint" hidden>Drag the timeline sideways, or use the arrow keys</p>
+  </div>
+</section>
+
+<!-- AWAY -->
+<section class="sec" id="away" data-theme="pink">
+  <div class="wrap">
+    <p class="kicker">Away from the desk</p>
+    <h2 class="statement" data-split>I like taking things apart to see how they work.</h2>
+    <ul class="away">
+      <li>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path pathLength="1" d="M14 4c0 10 20 10 20 20s-20 10-20 20"/><path pathLength="1" class="s" d="M34 4c0 10-20 10-20 20s20 10 20 20"/><path pathLength="1" d="M17 10h14M16 18h16M16 30h16M17 38h14"/></svg>
+        <h3>My own DNA</h3><p>Collected and unpacked my own DNA data, digging into less-covered European regions.</p>
+      </li>
+      <li>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect pathLength="1" x="6" y="6" width="22" height="28" rx="3"/><rect pathLength="1" x="12" y="12" width="22" height="28" rx="3"/><path pathLength="1" class="s" d="M40 18v24M34 36l6 6 6-6"/></svg>
+        <h3>Automating chores</h3><p>I write tools for long, boring tasks, like a bulk exporter for Snapchat Memories.</p>
+      </li>
+      <li>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path pathLength="1" d="M12 30h24l-3 14H15z"/><path pathLength="1" d="M24 30V20M24 22c-6 0-9-4-9-8 5 0 9 3 9 8zM24 20c0-5 4-8 9-8 0 4-3 8-9 8z"/><path pathLength="1" class="s" d="M40 4c-3 4-4 6-4 8a4 4 0 0 0 8 0c0-2-1-4-4-8z"/></svg>
+        <h3>Smart watering</h3><p>A smart watering system for plants, built on a Raspberry Pi.</p>
+      </li>
+      <li>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle pathLength="1" cx="13" cy="26" r="8"/><circle pathLength="1" cx="35" cy="26" r="8"/><path pathLength="1" d="M21 26c1-3 5-3 6 0M5 24 2 18M43 24l3-6"/><path pathLength="1" class="s" d="M9 23c1-2 3-3 5-3"/></svg>
+        <h3>AR glasses</h3><p>A pair of augmented-reality glasses, also built on a Raspberry Pi.</p>
+      </li>
+      <li>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path pathLength="1" d="M4 8h22v14H13l-6 5v-5H4z"/><path pathLength="1" class="s" d="M44 20H22v14h13l6 5v-5h3z"/></svg>
+        <h3>Debate Society</h3><p>Argued both sides of motions, and joined Q&amp;A sessions with serving MPs and UN representatives.</p>
+      </li>
+      <li>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect pathLength="1" x="4" y="6" width="40" height="26" rx="2"/><path pathLength="1" class="s" d="M12 24l8-8 6 5 10-9"/><path pathLength="1" d="M24 32v8M16 42h16"/></svg>
+        <h3>Guest speaker</h3><p>Giving talks to Data Science master’s students at Greenwich on landing internships, and helping with their dissertations.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="sec contact" id="contact" data-theme="night" data-gl>
+  <div class="wrap">
+    <h2 class="statement" data-split>Let’s talk.</h2>
+    <a class="email" id="email" href="mailto:chiticrobert@yahoo.com" data-cursor="Email">chiticrobert@yahoo.com</a>
+    <div class="contact-row">
+      <button class="btn" id="copy" type="button" data-magnetic data-cursor="Copy">Copy email</button>
+      <a class="btn btn-ghost" href="https://github.com/RobertChitic" rel="me noopener" target="_blank" data-magnetic>GitHub</a>
+      <a class="btn btn-ghost" href="https://www.linkedin.com/in/robert-chitic" rel="me noopener" target="_blank" data-magnetic>LinkedIn</a>
+      <a class="btn btn-ghost" href="cv/Robert-Chitic-CV.pdf" download data-magnetic data-cursor="PDF">CV</a>
+    </div>
+    <footer class="foot">
+      <p>Robert Chitic, London, 2026. Speaks English and Romanian.</p>
+      <p id="trace" hidden></p>
+      <button class="motion-toggle" id="motionToggle" type="button" aria-pressed="false">Pause animations</button>
+    </footer>
+  </div>
+</section>
+</main>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/SplitText.min.js"></script>
+<script src="vendor/Draggable.min.js"></script>
+<script src="vendor/InertiaPlugin.min.js"></script>
+<script src="vendor/ScrambleTextPlugin.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>
