@@ -1,7 +1,7 @@
 /* Robert Chitic, portfolio. Plain JS + GSAP 3 (ScrollTrigger, SplitText, Draggable, Inertia, ScrambleText). */
 (() => {
   'use strict';
-  gsap.registerPlugin(ScrollTrigger, SplitText, Draggable, InertiaPlugin, ScrambleTextPlugin);
+  gsap.registerPlugin(ScrollTrigger, Draggable, InertiaPlugin, ScrambleTextPlugin);
 
   const root = document.documentElement;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -225,22 +225,6 @@
         el.style.setProperty('--gx', (px * 100).toFixed(1) + '%'); el.style.setProperty('--gy', (py * 100).toFixed(1) + '%'); el.style.setProperty('--go', 1);
       });
       el.addEventListener('pointerleave', () => { rX(0); rY(0); el.style.setProperty('--go', 0); });
-    });
-  }
-
-  /* ------------------------------------------------------------------
-     5. Headline reveals (SplitText line masks)
-  ------------------------------------------------------------------ */
-  function splitHeadlines() {
-    if (reduce) return;
-    $$('[data-split]').forEach(el => {
-      SplitText.create(el, {
-        type: 'lines', mask: 'lines', autoSplit: true,
-        onSplit: self => gsap.from(self.lines, {
-          yPercent: 110, duration: 1.1, ease: 'expo.out', stagger: 0.08,
-          scrollTrigger: { trigger: el, start: 'top 85%', once: true }
-        })
-      });
     });
   }
 
@@ -560,7 +544,7 @@
     });
     h += `<div class="tl-now" style="left:calc(140px + (100% - 140px) * ${now / SPAN})"><span>Now</span></div>`;
     tl.innerHTML = h;
-    const vp = $('#tlViewport'), hint = $('.tl-hint');
+    const vp = $('#tlViewport'), hint = $('.tl-controls');
     // Drag only when the track is wider than the screen; otherwise it simply fits.
     const overflow = () => Math.max(0, tl.offsetWidth - vp.clientWidth);
     const [drag] = Draggable.create(tl, { type: 'x', inertia: true, bounds: { minX: -overflow(), maxX: 0 }, edgeResistance: 0.85, allowNativeTouchScrolling: true });
@@ -580,13 +564,18 @@
           .to(tl, { x: -overflow(), duration: 1, ease: 'elastic.out(1, 0.6)', onComplete: () => drag.update() });
       } });
     }
+    // Keyboard and button alternatives to dragging
+    const nudge = dir => {
+      const o = overflow(); if (!o) return;
+      const x = gsap.getProperty(tl, 'x') + dir * Math.max(200, vp.clientWidth * 0.6);
+      gsap.to(tl, { x: Math.max(-o, Math.min(0, x)), duration: reduce ? 0 : 0.5, ease: 'power3.out', onComplete: () => drag.update() });
+    };
     vp.addEventListener('keydown', e => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      const o = overflow(); if (!o) return;
-      e.preventDefault();
-      const x = gsap.getProperty(tl, 'x') + (e.key === 'ArrowLeft' ? 200 : -200);
-      gsap.to(tl, { x: Math.max(-o, Math.min(0, x)), duration: 0.5, ease: 'power3.out', onComplete: () => drag.update() });
+      e.preventDefault(); nudge(e.key === 'ArrowLeft' ? 1 : -1);
     });
+    $('#tlPrev').addEventListener('click', () => nudge(1));
+    $('#tlNext').addEventListener('click', () => nudge(-1));
 
     // Hover details that follow the cursor
     const tip = document.createElement('div'); tip.className = 'tip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip);
@@ -614,9 +603,14 @@
   });
   const copy = $('#copy');
   copy.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText('chiticrobert@yahoo.com'); copy.textContent = 'Copied'; }
-    catch { copy.textContent = 'chiticrobert@yahoo.com'; }
-    setTimeout(() => { copy.textContent = 'Copy email'; }, 2200);
+    const status = $('#copyStatus');
+    try { await navigator.clipboard.writeText('chiticrobert@yahoo.com'); copy.textContent = 'Copied'; status.textContent = 'Email address copied.'; }
+    catch {
+      copy.textContent = 'chiticrobert@yahoo.com';
+      const r = document.createRange(); r.selectNodeContents(email); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      status.textContent = 'Copying is blocked here. The address is selected so you can copy it yourself.';
+    }
+    setTimeout(() => { copy.textContent = 'Copy email'; status.textContent = ''; }, 2200);
   });
   fetch('/cdn-cgi/trace', { cache: 'no-store' }).then(r => r.ok ? r.text() : null).then(txt => {
     if (!txt) return;
@@ -634,7 +628,6 @@
   setTheme('night', true);
   document.fonts.ready.then(() => {
     intro();
-    splitHeadlines();
     ScrollTrigger.refresh();
   });
   addEventListener('resize', () => { if (heroOn) measureChars(); });

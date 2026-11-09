@@ -61,7 +61,7 @@
 <section class="sec" id="research" data-theme="lavender">
   <div class="wrap">
     <p class="kicker">Dissertation, 2025 to 2026</p>
-    <h2 class="statement" data-split>Does a newspaper’s reputation tell you how biased its articles are? <span class="soft">Only about half the time.</span></h2>
+    <h2 class="statement">Does a newspaper’s reputation tell you how biased its articles are? Only about half the time.</h2>
 
     <div class="research">
       <figure class="units" id="units">
@@ -112,7 +112,7 @@
 <section class="sec" id="cloudflare" data-theme="orange">
   <div class="wrap">
     <p class="kicker">Technical Support Engineer Intern, Cloudflare, July to September 2026</p>
-    <h2 class="statement" data-split>A summer on Cloudflare’s Premium and Enterprise cases.</h2>
+    <h2 class="statement">A summer on Cloudflare’s Premium and Enterprise cases.</h2>
 
     <figure class="ddos" id="ddos">
       <div class="ddos-head">
@@ -136,8 +136,7 @@
 <!-- PROJECTS -->
 <section class="sec" id="projects" data-theme="night">
   <div class="wrap">
-    <p class="kicker">More projects</p>
-    <h2 class="statement" data-split>Machine learning, distributed systems and a team I led.</h2>
+    <h2 class="statement">Machine learning, distributed systems and a team I led.</h2>
 
     <div class="projects">
       <article class="panel" data-tilt>
@@ -208,8 +207,7 @@
 <!-- TOOLKIT -->
 <section class="sec" id="toolkit" data-theme="lime">
   <div class="wrap">
-    <p class="kicker">Toolkit</p>
-    <h2 class="statement" data-split>Every tool here has been used on real work.</h2>
+    <h2 class="statement">Every tool here has been used on real work.</h2>
 
     <div class="matrix-wrap">
       <div class="matrix-box">
@@ -233,20 +231,24 @@
 <!-- TIMELINE -->
 <section class="sec" id="timeline" data-theme="night">
   <div class="wrap">
-    <p class="kicker">Timeline</p>
-    <h2 class="statement" data-split>The last two years, at a glance.</h2>
+    <h2 class="statement">The last two years, at a glance.</h2>
     <div class="tl-viewport" id="tlViewport" tabindex="0" aria-label="Timeline from February 2025 to now. Use the left and right arrow keys to move along it.">
       <div class="tl" id="tl"></div>
     </div>
-    <p class="label tl-hint" hidden>Drag the timeline sideways, or use the arrow keys</p>
+    <div class="tl-controls" hidden>
+      <p class="label">Drag the timeline sideways, or use the buttons</p>
+      <div class="tl-buttons">
+        <button class="btn btn-ghost tl-btn" type="button" id="tlPrev" aria-label="Show earlier">Earlier</button>
+        <button class="btn btn-ghost tl-btn" type="button" id="tlNext" aria-label="Show later">Later</button>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- AWAY -->
 <section class="sec" id="away" data-theme="pink">
   <div class="wrap">
-    <p class="kicker">Away from the desk</p>
-    <h2 class="statement" data-split>I like taking things apart to see how they work.</h2>
+    <h2 class="statement">I like taking things apart to see how they work.</h2>
     <ul class="away">
       <li>
         <svg viewBox="0 0 48 48" aria-hidden="true"><path pathLength="1" d="M14 4c0 10 20 10 20 20s-20 10-20 20"/><path pathLength="1" class="s" d="M34 4c0 10-20 10-20 20s20 10 20 20"/><path pathLength="1" d="M17 10h14M16 18h16M16 30h16M17 38h14"/></svg>
@@ -279,10 +281,11 @@
 <!-- CONTACT -->
 <section class="sec contact" id="contact" data-theme="night" data-gl>
   <div class="wrap">
-    <h2 class="statement" data-split>Let’s talk.</h2>
-    <a class="email" id="email" href="mailto:chiticrobert@yahoo.com" data-cursor="Email">chiticrobert@yahoo.com</a>
+    <h2 class="statement">Let’s talk.</h2>
+    <a class="email" id="email" href="mailto:chiticrobert@yahoo.com" data-cursor="Email" translate="no">chiticrobert@yahoo.com</a>
     <div class="contact-row">
       <button class="btn" id="copy" type="button" data-magnetic data-cursor="Copy">Copy email</button>
+      <span class="sr" id="copyStatus" aria-live="polite"></span>
       <a class="btn btn-ghost" href="https://github.com/RobertChitic" rel="me noopener" target="_blank" data-magnetic>GitHub</a>
       <a class="btn btn-ghost" href="https://www.linkedin.com/in/robert-chitic" rel="me noopener" target="_blank" data-magnetic>LinkedIn</a>
       <a class="btn btn-ghost" href="cv/Robert-Chitic-CV.pdf" download data-magnetic data-cursor="PDF">CV</a>
@@ -298,7 +301,6 @@
 
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/ScrollTrigger.min.js"></script>
-<script src="vendor/SplitText.min.js"></script>
 <script src="vendor/Draggable.min.js"></script>
 <script src="vendor/InertiaPlugin.min.js"></script>
 <script src="vendor/ScrambleTextPlugin.min.js"></script>
