@@ -9,7 +9,11 @@
   const $ = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const mouse = { x: innerWidth * 0.62, y: innerHeight * 0.45, inside: false };
-  let paused = false; // "Pause animations" control in the footer
+  // "Pause animations" on the front page: holds everything still until resumed.
+  let paused = false;
+  const still = () => reduce || paused;
+  const onPause = [];   // callbacks run with the new paused state
+  const entrances = []; // scroll-triggered reveals, jumped to their end state when paused
   addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.inside = true; }, { passive: true });
   document.addEventListener('pointerleave', () => { mouse.inside = false; });
 
@@ -30,7 +34,7 @@
     currentTheme = name;
     const t = THEMES[name];
     const vars = { '--bg':t.bg, '--fg':t.fg, '--muted':t.muted, '--line':t.line, '--accent':t.accent, '--accent-2':t.accent2, '--hi':t.hi, '--panel':t.panel };
-    gsap.to(root, { ...vars, duration: instant || reduce ? 0 : 0.8, ease: 'power2.out', overwrite: 'auto' });
+    gsap.to(root, { ...vars, duration: instant || still() ? 0 : 0.8, ease: 'power2.out', overwrite: 'auto' });
     metaTheme.setAttribute('content', t.bg);
     root.style.colorScheme = name === 'night' ? 'dark' : 'light';
   }
@@ -123,12 +127,14 @@
       scale = Math.min(devicePixelRatio || 1, innerWidth < 760 ? 1 : 1.5);
       W = Math.round(innerWidth * scale); H = Math.round(innerHeight * scale);
       glCanvas.width = W; glCanvas.height = H; gl.viewport(0, 0, W, H);
-      if (reduce) frame(performance.now());
+      if (still()) frame(performance.now());
     }
     function frame(now) {
       const k = reduce ? 1 : 0.08;
-      sm.x += (mouse.x - sm.x) * k; sm.y += (mouse.y - sm.y) * k;
-      sm.h += ((mouse.inside ? 1 : 0.55) - sm.h) * 0.04;
+      if (!paused) {
+        sm.x += (mouse.x - sm.x) * k; sm.y += (mouse.y - sm.y) * k;
+        sm.h += ((mouse.inside ? 1 : 0.55) - sm.h) * 0.04;
+      }
       gl.uniform2f(uRes, W, H);
       if (!reduce && !paused && lastNow) simT += Math.min(0.05, (now - lastNow) / 1000);
       lastNow = now;
@@ -139,10 +145,11 @@
       gl.uniform3f(uClick, click.x * scale, (innerHeight - click.y) * scale, reduce ? 99 : simT - click.at);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
-    function loop(now) { frame(now); raf = on ? requestAnimationFrame(loop) : 0; }
+    function loop(now) { if (!paused) frame(now); raf = on ? requestAnimationFrame(loop) : 0; }
     function show(v) {
       if (v === on) return; on = v;
-      gsap.to(glCanvas, { opacity: v ? 1 : 0, duration: 0.6, ease: 'power2.out' });
+      gsap.to(glCanvas, { opacity: v ? 1 : 0, duration: still() ? 0 : 0.6, ease: 'power2.out' });
+      if (v && still()) frame(performance.now());
       if (v && !reduce && !raf) raf = requestAnimationFrame(loop);
     }
     addEventListener('resize', resize); resize();
@@ -151,8 +158,9 @@
     document.addEventListener('visibilitychange', () => { if (document.hidden) { on = false; } else if (glOnWanted) { on = true; if (!reduce && !raf) raf = requestAnimationFrame(loop); } });
     // One click = every colour band moves one step inwards.
     function cycle(x, y) {
+      if (paused) return;
       pal.target += 0.25;
-      if (!paused) { click.x = x; click.y = y; click.at = simT; }
+      click.x = x; click.y = y; click.at = simT;
       gsap.to(pal, { shift: pal.target, duration: reduce ? 0 : 0.9, ease: 'power3.out', overwrite: true, onUpdate: () => { if (reduce) frame(performance.now()); } });
     }
     return { show, cycle };
@@ -185,7 +193,7 @@
       for (const c of chars) {
         const dx = mouse.x - c.cx, dy = mouse.y - (c.cy - scrollY);
         const d = Math.hypot(dx, dy * 1.4);
-        const k = mouse.inside ? Math.max(0, 1 - d / R) : 0;
+        const k = mouse.inside && !paused ? Math.max(0, 1 - d / R) : 0;
         const e = k * k * (3 - 2 * k);
         c.w += (75 + 25 * e - c.w) * 0.14; c.g += (600 + 100 * e - c.g) * 0.14;
         c.el.style.setProperty('--w', c.w.toFixed(2)); c.el.style.setProperty('--g', c.g.toFixed(1));
@@ -209,6 +217,8 @@
   ------------------------------------------------------------------ */
   if (finePointer && !reduce) {
     root.classList.add('has-cursor');
+    onPause.push(p => root.classList.toggle('has-cursor', !p));
+    const settle = (...fns) => fns.forEach(f => { f(0); f.tween.progress(1); }); // snap a quickTo back to rest
     const cur = $('.cursor'), ring = $('.cursor-ring'), dot = $('.cursor-dot'), label = $('.cursor-label');
     const rx = gsap.quickTo(ring, 'x', { duration: 0.45, ease: 'power3' }), ry = gsap.quickTo(ring, 'y', { duration: 0.45, ease: 'power3' });
     const dx = gsap.quickTo(dot, 'x', { duration: 0.08, ease: 'power3' }), dy = gsap.quickTo(dot, 'y', { duration: 0.08, ease: 'power3' });
@@ -230,20 +240,24 @@
       const xTo = gsap.quickTo(el, 'x', { duration: 0.6, ease: 'elastic.out(1, 0.45)' });
       const yTo = gsap.quickTo(el, 'y', { duration: 0.6, ease: 'elastic.out(1, 0.45)' });
       el.addEventListener('pointermove', e => {
+        if (paused) return;
         const r = el.getBoundingClientRect();
         xTo((e.clientX - (r.left + r.width / 2)) * 0.35); yTo((e.clientY - (r.top + r.height / 2)) * 0.35);
       });
-      el.addEventListener('pointerleave', () => { xTo(0); yTo(0); });
+      el.addEventListener('pointerleave', () => { if (!paused) { xTo(0); yTo(0); } });
+      onPause.push(p => { if (p) settle(xTo, yTo); });
     });
 
     $$('[data-tilt]').forEach(el => {
       const rX = gsap.quickTo(el, 'rotationX', { duration: 0.6, ease: 'power3' }), rY = gsap.quickTo(el, 'rotationY', { duration: 0.6, ease: 'power3' });
       el.addEventListener('pointermove', e => {
+        if (paused) return;
         const r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
         rY((px - 0.5) * 9); rX((0.5 - py) * 9);
         el.style.setProperty('--gx', (px * 100).toFixed(1) + '%'); el.style.setProperty('--gy', (py * 100).toFixed(1) + '%'); el.style.setProperty('--go', 1);
       });
-      el.addEventListener('pointerleave', () => { rX(0); rY(0); el.style.setProperty('--go', 0); });
+      el.addEventListener('pointerleave', () => { if (!paused) { rX(0); rY(0); } el.style.setProperty('--go', 0); });
+      onPause.push(p => { if (p) { settle(rX, rY); el.style.setProperty('--go', 0); } });
     });
   }
 
@@ -259,14 +273,14 @@
     // The panel floods with the colour of the section you are pointing at (set on the dialog so the cursor follows too).
     const paint = (t, instant) => gsap.to(dlg, {
       '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--accent': t.accent, '--accent-2': t.accent2, '--hi': t.hi,
-      duration: instant || reduce ? 0 : 0.45, ease: 'power2.out', overwrite: 'auto'
+      duration: instant || still() ? 0 : 0.45, ease: 'power2.out', overwrite: 'auto'
     });
     function open() {
       closing = false;
       paint(BASE, true);
       dlg.showModal();
       dlg.appendChild(cur); // the dialog sits above the page, so the custom cursor has to come with it
-      if (reduce) return;
+      if (still()) return;
       gsap.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' });
       gsap.fromTo(panel, { y: 36, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.55, ease: 'expo.out', clearProps: 'transform' });
       gsap.fromTo(opts, { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out', stagger: 0.07, delay: 0.08, clearProps: 'transform,opacity' });
@@ -274,7 +288,7 @@
     function close(then) {
       if (!dlg.open || closing) return;
       const done = () => { dlg.close(); then && then(); };
-      if (reduce) return done();
+      if (still()) return done();
       closing = true;
       gsap.to(scrim, { opacity: 0, duration: 0.22, ease: 'power2.in' });
       gsap.to(panel, { y: 16, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: done });
@@ -300,7 +314,7 @@
           try { history.pushState(null, '', hash); } catch { /* sandboxed previews block this; the scroll still happens */ }
           target.setAttribute('tabindex', '-1');
           target.focus({ preventScroll: true });
-          scrollTo({ top: target.getBoundingClientRect().top + scrollY, behavior: reduce ? 'auto' : 'smooth' });
+          scrollTo({ top: target.getBoundingClientRect().top + scrollY, behavior: still() ? 'auto' : 'smooth' });
         });
       });
     });
@@ -314,28 +328,29 @@
   for (let i = 0; i < 100; i++) { const s = document.createElement('span'); if (i < 55) s.className = 'hit'; grid.appendChild(s); squares.push(s); }
   let unitsReady = reduce;
   if (!reduce) {
-    gsap.from(squares, {
+    entrances.push(gsap.from(squares, {
       scale: 0, rotation: -45, duration: 0.6, ease: 'back.out(2)',
       stagger: { grid: [10, 10], from: 'start', amount: 0.9 },
       scrollTrigger: { trigger: grid, start: 'top 80%', once: true },
       onComplete: () => { unitsReady = true; }
-    });
+    }));
     const sTo = squares.map(s => gsap.quickTo(s, 'scale', { duration: 0.4, ease: 'power3' }));
     const units = $('#units');
     let centres = [];
     const measure = () => { centres = squares.map(s => { const r = s.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }); };
     units.addEventListener('pointermove', e => {
-      if (!unitsReady) return;
+      if (!unitsReady || paused) return;
       if (!centres.length) measure();
       centres.forEach(([cx, cy], i) => sTo[i](1 + 0.45 * Math.max(0, 1 - Math.hypot(e.clientX - cx, e.clientY - cy) / 110)));
     });
     addEventListener('scroll', () => { centres = []; }, { passive: true });
-    units.addEventListener('pointerleave', () => sTo.forEach(f => f(1)));
+    units.addEventListener('pointerleave', () => { if (!paused) sTo.forEach(f => f(1)); });
+    onPause.push(p => { if (p && unitsReady) sTo.forEach(f => { f(1); f.tween.progress(1); }); });
 
-    $$('.bar i').forEach(i => gsap.fromTo(i, { scaleX: 0 }, {
+    $$('.bar i').forEach(i => entrances.push(gsap.fromTo(i, { scaleX: 0 }, {
       scaleX: parseFloat(i.style.getPropertyValue('--w')), duration: 1.4, ease: 'expo.out',
       scrollTrigger: { trigger: '#score', start: 'top 85%', once: true }
-    }));
+    })));
   }
   const steps = $$('.pipe li');
   gsap.to('#pipeFill', {
@@ -353,8 +368,8 @@
     const to = +el.dataset.count;
     if (reduce) return;
     const o = { v: 0 };
-    gsap.to(o, { v: to, duration: 1.6, ease: 'power3.out', onUpdate: () => { el.textContent = Math.round(o.v); },
-      scrollTrigger: { trigger: el, start: 'top 85%', once: true } });
+    entrances.push(gsap.to(o, { v: to, duration: 1.6, ease: 'power3.out', onUpdate: () => { el.textContent = Math.round(o.v); },
+      scrollTrigger: { trigger: el, start: 'top 85%', once: true } }));
     el.textContent = '0';
   });
 
@@ -363,7 +378,7 @@
   ------------------------------------------------------------------ */
   (function ddos() {
     const cv = $('#ddosCanvas'), ctx = cv.getContext('2d'), out = $('#blocked');
-    const INK = '#1C0A00', CREAM = '#FFF0E3', FLASH = '#FFE14D';
+    const INK = '#160F45', USER = '#4B2CFF', FLASH = '#E5007E'; // attack traffic, real users, filter flash
     const LAYERS = [['Layer 7', 'Application'], ['Layer 4', 'Transport'], ['Layer 3', 'Network']];
     let W, H, dpr, labelW, shieldX, laneH, packets = [], hot = -1, hotUntil = 0, blocked = 0, running = false, last = 0;
     const flash = [0, 0, 0], acc = [0, 0, 0], accU = [0, 0, 0];
@@ -401,26 +416,26 @@
       ctx.font = `600 ${W < 500 ? 14 : 16}px "Instrument Sans", system-ui, sans-serif`;
       for (let l = 0; l < 3; l++) {
         const y0 = l * laneH;
-        if (l) { ctx.fillStyle = 'rgba(28,10,0,0.18)'; ctx.fillRect(16, y0, W - 32, 1); }
-        if (l === hot) { ctx.fillStyle = 'rgba(28,10,0,0.07)'; ctx.fillRect(0, y0, W, laneH); }
+        if (l) { ctx.fillStyle = 'rgba(22,15,69,0.16)'; ctx.fillRect(16, y0, W - 32, 1); }
+        if (l === hot) { ctx.fillStyle = 'rgba(22,15,69,0.06)'; ctx.fillRect(0, y0, W, laneH); }
         ctx.fillStyle = INK; ctx.font = `700 ${W < 500 ? 14 : 17}px "Instrument Sans", system-ui, sans-serif`;
         ctx.fillText(LAYERS[l][0], 20, y0 + laneH / 2 - 2);
-        ctx.font = `500 ${W < 500 ? 12 : 13}px "Instrument Sans", system-ui, sans-serif`; ctx.fillStyle = 'rgba(28,10,0,0.7)';
+        ctx.font = `500 ${W < 500 ? 12 : 13}px "Instrument Sans", system-ui, sans-serif`; ctx.fillStyle = 'rgba(22,15,69,0.72)';
         ctx.fillText(LAYERS[l][1], 20, y0 + laneH / 2 + 18);
         // filter
         const f = flash[l];
-        ctx.fillStyle = f > 0.02 ? FLASH : CREAM;
+        ctx.fillStyle = f > 0.02 ? FLASH : INK;
         ctx.shadowColor = FLASH; ctx.shadowBlur = 24 * f;
         const sh = laneH * 0.62; roundRect(shieldX - 3, y0 + (laneH - sh) / 2, 6, sh, 3); ctx.fill();
         ctx.shadowBlur = 0;
       }
       // origin
-      ctx.fillStyle = 'rgba(28,10,0,0.55)'; ctx.font = `600 12px "Instrument Sans", system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(22,15,69,0.6)'; ctx.font = `600 12px "Instrument Sans", system-ui, sans-serif`;
       ctx.textAlign = 'right'; ctx.fillText('Origin', W - 18, 22); ctx.textAlign = 'left';
       for (const p of packets) {
         ctx.globalAlpha = Math.max(0, p.a);
         if (p.type === 'atk') { ctx.fillStyle = INK; ctx.fillRect(p.x - 3, p.y - 3, 6, 6); }
-        else { ctx.fillStyle = CREAM; ctx.beginPath(); ctx.arc(p.x, p.y, 4.2, 0, 6.283); ctx.fill(); }
+        else { ctx.fillStyle = USER; ctx.beginPath(); ctx.arc(p.x, p.y, 4.2, 0, 6.283); ctx.fill(); }
       }
       ctx.globalAlpha = 1;
     }
@@ -456,10 +471,10 @@
   /* ------------------------------------------------------------------
      9. Projects: sepsis pins, coordinator election demo
   ------------------------------------------------------------------ */
-  if (!reduce) $$('#sepsisPlot .pin').forEach((g, i) => gsap.from(g, {
+  if (!reduce) $$('#sepsisPlot .pin').forEach((g, i) => entrances.push(gsap.from(g, {
     x: -(+g.dataset.x - 20), opacity: 0, duration: 1.4, delay: i * 0.15, ease: 'expo.out',
     scrollTrigger: { trigger: '#sepsisPlot', start: 'top 85%', once: true }
-  }));
+  })));
 
   (function election() {
     const svg = $('#chatPlot'), status = $('#chatStatus'), NS = 'http://www.w3.org/2000/svg';
@@ -493,7 +508,7 @@
         n.g.setAttribute('aria-label', `Laptop ${n.name}, ${!n.alive ? 'offline' : n === coord ? 'coordinator' : 'online'}. Press to ${n.alive ? 'take offline' : 'bring back online'}.`);
         if (n.alive && n !== coord && coord) el('line', { x1: n.x, y1: n.y, x2: coord.x, y2: coord.y, class: 'link' }, linkG);
       });
-      if (coord) gsap.to(halo, { attr: { cx: coord.x, cy: coord.y }, duration: reduce ? 0 : 0.6, ease: 'expo.out' });
+      if (coord) gsap.to(halo, { attr: { cx: coord.x, cy: coord.y }, duration: still() ? 0 : 0.6, ease: 'expo.out' });
       halo.style.display = coord ? '' : 'none';
     }
     function toggle(n) {
@@ -513,7 +528,10 @@
       }
     }
     render();
-    if (!reduce) gsap.to(halo, { attr: { r: 36 }, opacity: 0.15, duration: 1.1, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+    if (!reduce) {
+      const pulse = gsap.to(halo, { attr: { r: 36 }, opacity: 0.15, duration: 1.1, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+      onPause.push(p => { pulse.paused(p); if (p) { gsap.killTweensOf([...msgG.children]); msgG.innerHTML = ''; } });
+    }
     let timer = null;
     function send() {
       const alive = nodes.filter(x => x.alive && x !== coord);
@@ -587,7 +605,7 @@
   (function timeline() {
     const SPAN = 23, pct = v => (v / SPAN * 100) + '%', now = 21 + 9 / 30;
     const MONTHS = ['Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const C = { proj: '#4DF2C3', diss: '#8B7BFF', cf: '#FF6B2C', com: '#FF5FCB' };
+    const C = { proj: '#4B2CFF', diss: '#160F45', cf: '#FF6B2C', com: '#E5007E' }; // bar colours for the light background
     const lanes = [
       { name: 'Projects', rows: [
         [{ s: 0, e: 3, l: 'Distributed chat system', c: C.proj, tip: 'Feb to Apr 2025. Java, sockets and JUnit.' }, { s: 8, e: 18, l: 'Political bias dissertation', c: C.diss, in: 1, tip: 'Oct 2025 to Jul 2026. Recommended for publication.' }],
@@ -613,7 +631,7 @@
         row.forEach(b => {
           if (b.ms !== undefined) { h += `<div class="tl-ms" data-tip="${b.tip}" style="left:${pct(b.ms)}"><span>${b.l}</span></div>`; return; }
           const cls = 'tl-bar' + (b.ring ? ' ring' : '') + (b.open ? ' open' : '');
-          h += `<div class="${cls}" data-tip="${b.tip}" style="--c:${b.c};left:${pct(b.s)};width:calc(${pct(b.e - b.s)} - 4px)">${b.in ? b.l : ''}</div>`;
+          h += `<div class="${cls}" data-tip="${b.tip}" style="--c:${b.c};${b.c === C.cf ? '--t:#1C0A00;' : ''}left:${pct(b.s)};width:calc(${pct(b.e - b.s)} - 4px)">${b.in ? b.l : ''}</div>`;
           if (!b.in) h += `<span class="tl-lab${b.left ? ' left' : ''}" style="left:calc(${pct(b.left ? b.s : b.e)} ${b.left ? '- 12px' : '+ 10px'})">${b.l}</span>`;
         });
         h += '</div>';
@@ -638,6 +656,7 @@
     if (fit() > 0) {
       gsap.set(tl, { x: -overflow() }); drag.update();
       if (!reduce) ScrollTrigger.create({ trigger: vp, start: 'top 75%', once: true, onEnter: () => {
+        if (paused) return;
         gsap.timeline().to(tl, { x: -overflow() + 120, duration: 0.9, ease: 'power3.inOut' })
           .to(tl, { x: -overflow(), duration: 1, ease: 'elastic.out(1, 0.6)', onComplete: () => drag.update() });
       } });
@@ -646,7 +665,7 @@
     const nudge = dir => {
       const o = overflow(); if (!o) return;
       const x = gsap.getProperty(tl, 'x') + dir * Math.max(200, vp.clientWidth * 0.6);
-      gsap.to(tl, { x: Math.max(-o, Math.min(0, x)), duration: reduce ? 0 : 0.5, ease: 'power3.out', onComplete: () => drag.update() });
+      gsap.to(tl, { x: Math.max(-o, Math.min(0, x)), duration: still() ? 0 : 0.5, ease: 'power3.out', onComplete: () => drag.update() });
     };
     vp.addEventListener('keydown', e => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
@@ -670,14 +689,16 @@
      12. Contact: scramble, copy, live network trace
   ------------------------------------------------------------------ */
   const email = $('#email');
-  if (!reduce) email.addEventListener('pointerenter', () => gsap.to(email, { duration: 0.9, scrambleText: { text: 'chiticrobert@yahoo.com', chars: '01', speed: 0.5, revealDelay: 0.15 }, overwrite: true }));
+  if (!reduce) email.addEventListener('pointerenter', () => !paused && gsap.to(email, { duration: 0.9, scrambleText: { text: 'chiticrobert@yahoo.com', chars: '01', speed: 0.5, revealDelay: 0.15 }, overwrite: true }));
   const motionBtn = $('#motionToggle');
   if (reduce) motionBtn.hidden = true;
   motionBtn.addEventListener('click', () => {
     paused = !paused;
     root.classList.toggle('motion-paused', paused);
-    motionBtn.setAttribute('aria-pressed', String(paused));
-    motionBtn.textContent = paused ? 'Resume animations' : 'Pause animations';
+    motionBtn.classList.toggle('is-paused', paused);
+    $('#motionText').textContent = paused ? 'Resume animations' : 'Pause animations';
+    if (paused) entrances.forEach(t => { if (t.scrollTrigger) t.scrollTrigger.kill(false, true); t.progress(1); });
+    onPause.forEach(fn => fn(paused));
   });
   const copy = $('#copy');
   copy.addEventListener('click', async () => {
