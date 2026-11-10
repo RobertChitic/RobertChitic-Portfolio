@@ -29,9 +29,10 @@
   <a class="nav-name" href="#top" data-magnetic>RC</a>
   <nav aria-label="Sections">
     <a href="#research" data-magnetic>Research</a>
-    <a href="#cloudflare" data-magnetic>Cloudflare</a>
     <a href="#projects" data-magnetic>Projects</a>
+    <a href="#cloudflare" data-magnetic>Cloudflare</a>
     <a href="#timeline" data-magnetic>Timeline</a>
+    <a href="#about" data-magnetic>About</a>
     <a class="nav-cta" href="#contact" data-magnetic>Contact</a>
   </nav>
 </header>
@@ -48,13 +49,14 @@
     <div class="hero-foot">
       <p class="lede">Software and AI engineer in London. First-Class Computer Science from Greenwich, then a summer at Cloudflare.</p>
       <div class="hero-actions">
-        <a class="btn" href="#contact" data-magnetic>Get in touch</a>
+        <button class="btn btn-ask" id="menuOpen" type="button" aria-haspopup="dialog" data-magnetic>What do you want to learn about me?<span class="ask-dots" aria-hidden="true"><i></i><i></i><i></i></span></button>
+        <a class="btn btn-ghost" href="#contact" data-magnetic>Get in touch</a>
         <a class="btn btn-ghost" href="cv/Robert-Chitic-CV.pdf" download data-magnetic data-cursor="PDF">Download CV</a>
       </div>
       <p class="status"><i></i>Open to software and AI engineering roles</p>
     </div>
   </div>
-  <p class="hint" id="hint">Move your cursor through the field</p>
+  <p class="hint" id="hint">Move through the field. Click to shift the colours.</p>
 </section>
 
 <!-- RESEARCH -->
@@ -105,31 +107,6 @@
         <li><strong>Chrome extension</strong><span>Scores the article you’re reading</span></li>
       </ol>
     </figure>
-  </div>
-</section>
-
-<!-- CLOUDFLARE -->
-<section class="sec" id="cloudflare" data-theme="orange">
-  <div class="wrap">
-    <p class="kicker">Technical Support Engineer Intern, Cloudflare, July to September 2026</p>
-    <h2 class="statement">A summer on Cloudflare’s Premium and Enterprise cases.</h2>
-
-    <figure class="ddos" id="ddos">
-      <div class="ddos-head">
-        <p class="label">Hover a layer to launch an attack</p>
-        <p class="ddos-count"><b class="num" id="blocked">0</b> attack packets blocked</p>
-      </div>
-      <canvas id="ddosCanvas" data-cursor="Attack" tabindex="0" role="img" aria-label="Animation: attack traffic is blocked at layers 3, 4 and 7 while real users pass through. Press 3, 4 or 7 to launch an attack at that layer."></canvas>
-      <figcaption>Based on an attack-and-defend lab set by my manager: I reproduced DDoS attacks at layers 3, 4 and 7 on DigitalOcean VMs, then defended against them with WAF rules, SSL/TLS and Zero Trust.</figcaption>
-    </figure>
-
-    <ol class="log">
-      <li><span class="lead num" data-count="60">60</span><p>Premium and Enterprise cases resolved, through tickets and live customer calls across Cloudflare’s networking and security products.</p></li>
-      <li><span class="lead">Built solo</span><p>An onboarding tool for new hires: a wiki of hundreds of troubleshooting guides and past cases, linked to Cloudflare’s internal AI assistant through an MCP server that guides people to the answer.</p></li>
-      <li><span class="lead num">1 of <span data-count="50">50</span></span><p>Teams in the company hackathon, across EMEA, North America and APAC. We built an on-page AI assistant on Workers AI that restyles any website on request.</p></li>
-      <li><span class="lead">On call</span><p>Joined the PagerDuty rota. Traced root causes with shell scripts, Python and networking tools, and escalated confirmed bugs to engineering with reproduction steps.</p></li>
-      <li><span class="lead">Shout-out</span><p>Recognised company-wide at the end of the internship for supporting the team and joining high-priority customer calls.</p></li>
-    </ol>
   </div>
 </section>
 
@@ -204,6 +181,31 @@
   </div>
 </section>
 
+<!-- CLOUDFLARE -->
+<section class="sec" id="cloudflare" data-theme="orange">
+  <div class="wrap">
+    <p class="kicker">Technical Support Engineer Intern, Cloudflare, July to September 2026</p>
+    <h2 class="statement">A summer on Cloudflare’s Premium and Enterprise cases.</h2>
+
+    <figure class="ddos" id="ddos">
+      <div class="ddos-head">
+        <p class="label">Hover a layer to launch an attack</p>
+        <p class="ddos-count"><b class="num" id="blocked">0</b> attack packets blocked</p>
+      </div>
+      <canvas id="ddosCanvas" data-cursor="Attack" tabindex="0" role="img" aria-label="Animation: attack traffic is blocked at layers 3, 4 and 7 while real users pass through. Press 3, 4 or 7 to launch an attack at that layer."></canvas>
+      <figcaption>Based on an attack-and-defend lab set by my manager: I reproduced DDoS attacks at layers 3, 4 and 7 on DigitalOcean VMs, then defended against them with WAF rules, SSL/TLS and Zero Trust.</figcaption>
+    </figure>
+
+    <ol class="log">
+      <li><span class="lead num" data-count="60">60</span><p>Premium and Enterprise cases resolved, through tickets and live customer calls across Cloudflare’s networking and security products.</p></li>
+      <li><span class="lead">Built solo</span><p>An onboarding tool for new hires: a wiki of hundreds of troubleshooting guides and past cases, linked to Cloudflare’s internal AI assistant through an MCP server that guides people to the answer.</p></li>
+      <li><span class="lead num">1 of <span data-count="50">50</span></span><p>Teams in the company hackathon, across EMEA, North America and APAC. We built an on-page AI assistant on Workers AI that restyles any website on request.</p></li>
+      <li><span class="lead">On call</span><p>Joined the PagerDuty rota. Traced root causes with shell scripts, Python and networking tools, and escalated confirmed bugs to engineering with reproduction steps.</p></li>
+      <li><span class="lead">Shout-out</span><p>Recognised company-wide at the end of the internship for supporting the team and joining high-priority customer calls.</p></li>
+    </ol>
+  </div>
+</section>
+
 <!-- TOOLKIT -->
 <section class="sec" id="toolkit" data-theme="lime">
   <div class="wrap">
@@ -245,9 +247,10 @@
   </div>
 </section>
 
-<!-- AWAY -->
-<section class="sec" id="away" data-theme="pink">
+<!-- ABOUT -->
+<section class="sec" id="about" data-theme="pink">
   <div class="wrap">
+    <p class="kicker">About me</p>
     <h2 class="statement">I like taking things apart to see how they work.</h2>
     <ul class="away">
       <li>
@@ -287,7 +290,7 @@
       <button class="btn" id="copy" type="button" data-magnetic data-cursor="Copy">Copy email</button>
       <span class="sr" id="copyStatus" aria-live="polite"></span>
       <a class="btn btn-ghost" href="https://github.com/RobertChitic" rel="me noopener" target="_blank" data-magnetic>GitHub</a>
-      <a class="btn btn-ghost" href="https://www.linkedin.com/in/robert-chitic" rel="me noopener" target="_blank" data-magnetic>LinkedIn</a>
+      <a class="btn btn-ghost" href="https://www.linkedin.com/in/robert-chitic-86170a345/" rel="me noopener" target="_blank" data-magnetic>LinkedIn</a>
       <a class="btn btn-ghost" href="cv/Robert-Chitic-CV.pdf" download data-magnetic data-cursor="PDF">CV</a>
     </div>
     <footer class="foot">
@@ -298,6 +301,21 @@
   </div>
 </section>
 </main>
+
+<dialog class="menu" id="menu" aria-labelledby="menuTitle">
+  <div class="menu-scrim" data-close></div>
+  <div class="menu-panel">
+    <div class="menu-head">
+      <h2 id="menuTitle">What do you want to learn about me?</h2>
+      <button class="btn btn-ghost menu-close" type="button" data-close data-magnetic>Close</button>
+    </div>
+    <nav class="menu-list" aria-label="Jump to a section">
+      <a class="menu-opt" href="#about" data-theme="pink"><span class="menu-word">About me</span><span class="menu-sub">Who I am away from the desk</span></a>
+      <a class="menu-opt" href="#cloudflare" data-theme="orange"><span class="menu-word">Experience</span><span class="menu-sub">A summer in technical support at Cloudflare</span></a>
+      <a class="menu-opt" href="#research" data-theme="lavender"><span class="menu-word">Projects</span><span class="menu-sub">My dissertation and three more builds</span></a>
+    </nav>
+  </div>
+</dialog>
 
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/ScrollTrigger.min.js"></script>

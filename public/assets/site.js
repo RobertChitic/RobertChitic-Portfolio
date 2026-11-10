@@ -57,7 +57,7 @@
       in vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
     const fs = `#version 300 es
       precision highp float;
-      uniform vec2 uRes; uniform float uTime; uniform vec2 uMouse; uniform float uHover;
+      uniform vec2 uRes; uniform float uTime; uniform vec2 uMouse; uniform float uHover; uniform float uShift; uniform vec3 uClick;
       out vec4 o;
       vec2 hash(vec2 p){ p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3))); return -1.0 + 2.0*fract(sin(p)*43758.5453123); }
       float noise(vec2 p){
@@ -67,10 +67,13 @@
       }
       float fbm(vec2 p){ float v = 0.0, a = 0.5; mat2 r = mat2(0.8,0.6,-0.6,0.8);
         for (int i = 0; i < 4; i++){ v += a*noise(p); p = r*p*2.03 + vec2(1.7,9.2); a *= 0.5; } return v; }
+      // Five colours in a loop. uShift slides every band one step towards the cursor per click;
+      // the colour at the centre wraps round to the outside.
       vec3 ramp(float t){
-        t = clamp(t, 0.0, 1.0) * 4.0;
+        t = mod(clamp(t, 0.0, 1.0) - uShift, 1.25) * 4.0;
         vec3 c0 = vec3(0.36,0.33,1.00), c1 = vec3(1.00,0.31,0.80), c2 = vec3(1.00,0.52,0.24), c3 = vec3(1.00,0.88,0.30), c4 = vec3(0.30,0.95,0.76);
-        if (t < 1.0) return mix(c0,c1,t); if (t < 2.0) return mix(c1,c2,t-1.0); if (t < 3.0) return mix(c2,c3,t-2.0); return mix(c3,c4,t-3.0);
+        if (t < 1.0) return mix(c0,c1,t); if (t < 2.0) return mix(c1,c2,t-1.0); if (t < 3.0) return mix(c2,c3,t-2.0);
+        if (t < 4.0) return mix(c3,c4,t-3.0); return mix(c4,c0,t-4.0);
       }
       void main(){
         vec2 uv = gl_FragCoord.xy / uRes;
@@ -83,7 +86,10 @@
         vec2 q = m + rot*dm;
         float t = uTime * 0.045;
         vec2 w = vec2(fbm(q*0.85 + vec2(t, -t)), fbm(q*0.85 + vec2(4.0 - t, 1.3 + t)));
-        float h = fbm(q*0.75 + w*1.7 + vec2(0.0, t*0.5)) + bump*0.32;
+        vec2 cp = (uClick.xy/uRes - 0.5) * asp * 2.4;
+        float age = uClick.z;
+        float ring = exp(-pow((length(p - cp) - age*1.7) * 5.5, 2.0)) * exp(-age*1.5) * step(age, 5.0);
+        float h = fbm(q*0.75 + w*1.7 + vec2(0.0, t*0.5)) + bump*0.32 + ring*0.07;
         float N = 15.0;
         float hv = h*N;
         float fw = fwidth(hv);
@@ -92,7 +98,7 @@
         float major = 1.0 - smoothstep(0.0, fw*2.6, abs(fract(hv/5.0 - 0.5) - 0.5)*5.0);
         vec3 col = ramp(h*1.15 + 0.5 + bump*0.25);
         vec3 bg = vec3(0.055, 0.043, 0.149);
-        float glow = 0.42 + 0.9*bump;
+        float glow = 0.42 + 0.9*bump + 0.8*ring;
         vec3 c = bg + col*0.05 + col*line*glow*0.85 + col*major*0.35;
         c += col * bump * 0.10;
         float v = smoothstep(1.25, 0.2, length((uv - vec2(0.5,0.55))*vec2(1.0,1.15)));
@@ -109,9 +115,10 @@
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const U = n => gl.getUniformLocation(prog, n);
-    const uRes = U('uRes'), uTime = U('uTime'), uMouse = U('uMouse'), uHover = U('uHover');
+    const uRes = U('uRes'), uTime = U('uTime'), uMouse = U('uMouse'), uHover = U('uHover'), uShift = U('uShift'), uClick = U('uClick');
     let scale = 1, W = 0, H = 0, on = true, raf = 0, simT = 8, lastNow = 0;
     const sm = { x: mouse.x, y: mouse.y, h: 0.55 };
+    const pal = { shift: 0, target: 0 }, click = { x: 0, y: 0, at: -99 };
     function resize() {
       scale = Math.min(devicePixelRatio || 1, innerWidth < 760 ? 1 : 1.5);
       W = Math.round(innerWidth * scale); H = Math.round(innerHeight * scale);
@@ -128,6 +135,8 @@
       gl.uniform1f(uTime, simT);
       gl.uniform2f(uMouse, sm.x * scale, (innerHeight - sm.y) * scale);
       gl.uniform1f(uHover, sm.h);
+      gl.uniform1f(uShift, pal.shift % 1.25);
+      gl.uniform3f(uClick, click.x * scale, (innerHeight - click.y) * scale, reduce ? 99 : simT - click.at);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
     function loop(now) { frame(now); raf = on ? requestAnimationFrame(loop) : 0; }
@@ -140,12 +149,22 @@
     if (!reduce) raf = requestAnimationFrame(loop);
     if (reduce) addEventListener('pointermove', () => on && frame(performance.now()), { passive: true });
     document.addEventListener('visibilitychange', () => { if (document.hidden) { on = false; } else if (glOnWanted) { on = true; if (!reduce && !raf) raf = requestAnimationFrame(loop); } });
-    return { show };
+    // One click = every colour band moves one step inwards.
+    function cycle(x, y) {
+      pal.target += 0.25;
+      if (!paused) { click.x = x; click.y = y; click.at = simT; }
+      gsap.to(pal, { shift: pal.target, duration: reduce ? 0 : 0.9, ease: 'power3.out', overwrite: true, onUpdate: () => { if (reduce) frame(performance.now()); } });
+    }
+    return { show, cycle };
   })();
   let heroOn = true, contactOn = false, glOnWanted = true;
   const syncGL = () => { glOnWanted = heroOn || contactOn; field && field.show(glOnWanted); };
   ScrollTrigger.create({ trigger: '.hero', start: 'top bottom', end: 'bottom 15%', onToggle: s => { heroOn = s.isActive; syncGL(); } });
   ScrollTrigger.create({ trigger: '#contact', start: 'top 45%', end: 'bottom top', onToggle: s => { contactOn = s.isActive; syncGL(); } });
+  // Clicking the field (not a link or button) cycles its colours.
+  const cycleField = e => { if (field && !e.target.closest('a, button')) field.cycle(e.clientX, e.clientY); };
+  $('.hero').addEventListener('click', cycleField);
+  $('#contact').addEventListener('click', cycleField);
 
   /* ------------------------------------------------------------------
      3. Name: letters stretch and thicken as the cursor passes (variable font axes)
@@ -227,6 +246,65 @@
       el.addEventListener('pointerleave', () => { rX(0); rY(0); el.style.setProperty('--go', 0); });
     });
   }
+
+  /* ------------------------------------------------------------------
+     5. "What do you want to learn about me?" menu
+  ------------------------------------------------------------------ */
+  (function menu() {
+    const dlg = $('#menu'), opener = $('#menuOpen');
+    if (typeof dlg.showModal !== 'function') { opener.hidden = true; return; }
+    const panel = $('.menu-panel', dlg), scrim = $('.menu-scrim', dlg), opts = $$('.menu-opt', dlg), cur = $('.cursor');
+    const BASE = { ...THEMES.night, bg: '#14103A' };
+    let closing = false;
+    // The panel floods with the colour of the section you are pointing at (set on the dialog so the cursor follows too).
+    const paint = (t, instant) => gsap.to(dlg, {
+      '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--accent': t.accent, '--accent-2': t.accent2, '--hi': t.hi,
+      duration: instant || reduce ? 0 : 0.45, ease: 'power2.out', overwrite: 'auto'
+    });
+    function open() {
+      closing = false;
+      paint(BASE, true);
+      dlg.showModal();
+      dlg.appendChild(cur); // the dialog sits above the page, so the custom cursor has to come with it
+      if (reduce) return;
+      gsap.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' });
+      gsap.fromTo(panel, { y: 36, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.55, ease: 'expo.out', clearProps: 'transform' });
+      gsap.fromTo(opts, { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'expo.out', stagger: 0.07, delay: 0.08, clearProps: 'transform,opacity' });
+    }
+    function close(then) {
+      if (!dlg.open || closing) return;
+      const done = () => { dlg.close(); then && then(); };
+      if (reduce) return done();
+      closing = true;
+      gsap.to(scrim, { opacity: 0, duration: 0.22, ease: 'power2.in' });
+      gsap.to(panel, { y: 16, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: done });
+    }
+    dlg.addEventListener('close', () => {
+      closing = false;
+      document.body.prepend(cur);
+      gsap.killTweensOf([panel, scrim, ...opts]);
+      gsap.set([panel, scrim, ...opts], { clearProps: 'transform,opacity' });
+    });
+    opener.addEventListener('click', open);
+    $$('[data-close]', dlg).forEach(el => el.addEventListener('click', () => close()));
+    opts.forEach(a => {
+      const theme = THEMES[a.dataset.theme];
+      a.addEventListener('pointerenter', () => paint(theme));
+      a.addEventListener('pointerleave', () => paint(BASE));
+      a.addEventListener('focus', () => { if (a.matches(':focus-visible')) paint(theme); });
+      a.addEventListener('blur', () => paint(BASE));
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const hash = a.getAttribute('href'), target = $(hash);
+        close(() => {
+          try { history.pushState(null, '', hash); } catch { /* sandboxed previews block this; the scroll still happens */ }
+          target.setAttribute('tabindex', '-1');
+          target.focus({ preventScroll: true });
+          scrollTo({ top: target.getBoundingClientRect().top + scrollY, behavior: reduce ? 'auto' : 'smooth' });
+        });
+      });
+    });
+  })();
 
   /* ------------------------------------------------------------------
      6. Research: unit chart, score bars, pipeline progress
